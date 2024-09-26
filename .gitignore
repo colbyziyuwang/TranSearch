@@ -1,0 +1,6 @@
+__pycache__/
+amazon/
+processed/
+pytorch/__pycache__/
+runs/
+scripts/__pycache__/
