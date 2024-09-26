@@ -26,7 +26,7 @@ class PretrainData(Dataset):
 			asin: self.doc2vec_model.docvecs[asin] for asin in self.asin_dict}
 
 		# visual feature data
-		self.vis_vec = np.load(config.img_feature_path).item()
+		self.vis_vec = np.load(config.img_feature_path, allow_pickle=True).item()
 
 	def sample_neg(self):
 		""" Sample the anchor, positive, negative tuples. """

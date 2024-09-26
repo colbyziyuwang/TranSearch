@@ -6,6 +6,8 @@ import os, sys
 import time
 import json
 import argparse
+from tqdm import tqdm
+
 sys.path.append(os.getcwd())
 
 import numpy as np
@@ -139,7 +141,10 @@ def main():
 		text_size=config.textual_size, 
 		embed_size=FLAGS.embed_size, 
 		dropout=FLAGS.dropout, is_training=True)
-	model.cuda()
+	
+	device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+	model.to(device)	
+
 	optimizer = torch.optim.Adam(model.parameters(), lr=FLAGS.lr)
 
 	# Prepare input data.
@@ -156,13 +161,13 @@ def main():
 		dataloader = DataLoader(data, 
 			batch_size=FLAGS.batch_size, shuffle=False, num_workers=4)
 
-		for idx, batch_data in enumerate(dataloader):
-			at = batch_data['anchor_text'].cuda()
-			av = batch_data['anchor_vis'].cuda()
-			pt = batch_data['pos_text'].cuda()
-			pv = batch_data['pos_vis'].cuda()
-			nt = batch_data['neg_text'].cuda()
-			nv = batch_data['neg_vis'].cuda()
+		for idx, batch_data in enumerate(tqdm(dataloader, desc="Training Batches")):
+			at = batch_data['anchor_text'].to(device)
+			av = batch_data['anchor_vis'].to(device)
+			pt = batch_data['pos_text'].to(device)
+			pv = batch_data['pos_vis'].to(device)
+			nt = batch_data['neg_text'].to(device)
+			nv = batch_data['neg_vis'].to(device)
 
 			model.zero_grad()
 			((av_encode, pv_encode, nv_encode), 

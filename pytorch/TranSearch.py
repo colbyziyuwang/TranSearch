@@ -20,7 +20,7 @@ from tensorboardX import SummaryWriter
 import evaluate
 import config
 from data_input import TranSearchData
-
+from tqdm import tqdm
 
 class TranSearch(nn.Module):
 	def __init__(self, visual_FC, textual_FC, 
@@ -245,25 +245,27 @@ def main():
 			config.visual_size, config.textual_size, 
 			FLAGS.embed_size, user_size, 
 			FLAGS.mode, FLAGS.dropout, is_training=True)
-	model.cuda()
+	device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+	model.to(device)
+
 	optimizer = torch.optim.Adam(
 				model.parameters(), lr=FLAGS.lr, weight_decay=0.0001)
 
 	best_mrr, best_hit, best_ndcg = 0.0, 0.0, 0.0
 	best_epoch = 0
 	print("Start training......\n")
-	for epoch in range(20):
+	for epoch in range(40):
 		model.is_training = True
 		model.train() 
 		start_time = time.time()
 
-		for idx, batch_data in enumerate(dataloader_train):
-			user = batch_data['userID'].cuda()
-			query = batch_data['query'].cuda()
-			pos_vis = batch_data['pos_vis'].cuda()
-			pos_text = batch_data['pos_text'].cuda()
-			neg_vis = batch_data['neg_vis'].cuda()
-			neg_text = batch_data['neg_text'].cuda()
+		for idx, batch_data in enumerate(tqdm(dataloader_train, desc="batch training")):
+			user = batch_data['userID'].to(device)
+			query = batch_data['query'].to(device)
+			pos_vis = batch_data['pos_vis'].to(device)
+			pos_text = batch_data['pos_text'].to(device)
+			neg_vis = batch_data['neg_vis'].to(device)
+			neg_text = batch_data['neg_text'].to(device)
 
 			model.zero_grad()
 			item_predict, pos_item, neg_items = model(user, query,

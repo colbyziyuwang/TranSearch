@@ -3,6 +3,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
+from tqdm import tqdm
 
 def mrr(gt_item, pred_items):
 	if gt_item in pred_items:
@@ -31,24 +32,25 @@ def metrics(model, data_test, dataloader_test, top_k, is_output, epoch):
 	######################## COMPUTE ALL ITEMS ONCE ####################
 	all_items_embed = []
 	all_item_idxs = []
+	device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
 	for vis, text, asin in data_test.get_all_test():
-		vis = torch.cuda.FloatTensor(vis).view(1, -1)
-		text = torch.cuda.FloatTensor(text).view(1, -1)
+		vis = torch.FloatTensor(vis).view(1, -1).to(device)
+		text = torch.FloatTensor(np.copy(text)).view(1, -1).to(device)
 		item_embed = model(None, None, vis, text, None, None, True)
 
 		all_item_idxs.append(asin)
 		all_items_embed.append(item_embed.view(-1).data.cpu().numpy())
 
 	item_size = len(all_item_idxs)
-	all_items_embed = torch.cuda.FloatTensor(np.array(all_items_embed))
+	all_items_embed = torch.FloatTensor(np.array(all_items_embed)).to(device)
 
 	all_items_map = {i: item for i, item in enumerate(all_item_idxs)}
 	user_bought = data_test.user_bought
 
 	####################### FOR EVERY USER-QUERY PAIR ####################
-	for idx, batch_data in enumerate(dataloader_test):
-		user = batch_data['userID'].cuda()
-		query = batch_data['query'].cuda()
+	for idx, batch_data in enumerate(tqdm(dataloader_test, desc="testing batch")):
+		user = batch_data['userID'].to(device)
+		query = batch_data['query'].to(device)
 		reviewerID = batch_data['reviewerID'][0]
 		item = batch_data['item'][0]
 		query_text = batch_data['query_text']

@@ -80,7 +80,7 @@ for epoch in range(passes):
     random.shuffle(docs)
 
     model.alpha, model.min_alpha = alpha_val, alpha_val
-    model.train(docs, total_examples=len(docs), epochs=model.iter)
+    model.train(docs, total_examples=len(docs), epochs=1)
     alpha_val -= alpha_delta
 
 ############################### SAVE TO DISK ################################

@@ -1,8 +1,8 @@
 # choose dataset name
-dataset = 'men_cloth'
+dataset = 'Toys_and_Games'
 
 # paths
-main_path = '/home/share/guoyangyang/amazon/'
+main_path = '/Users/colbywang/Desktop/TranSearch/amazon/'
 stop_file = './stopwords.txt'
 
 processed_path = './processed/'
