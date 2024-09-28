@@ -22,6 +22,7 @@ from tensorboardX import SummaryWriter
 import config
 from data_input import PretrainData
 
+from utils import set_seeds
 
 class PrepareFeatures(nn.Module):
 	def __init__(self, visual_size, text_size, 
@@ -95,6 +96,7 @@ class PrepareFeatures(nn.Module):
 
 
 def main():
+	set_seeds(42)
 	torch.multiprocessing.set_sharing_strategy('file_system')
 
 	parser = argparse.ArgumentParser()

@@ -13,6 +13,7 @@ import config
 import text_process
 import image_process
 
+from utils import set_seeds
 
 def get_df(path):
     """ Apply raw data to pandas DataFrame. """
@@ -199,6 +200,7 @@ def gender_split(df):
 
 
 def main():
+    set_seeds(42)
     parser = argparse.ArgumentParser()
     parser.add_argument('--review_file', 
         type=str,

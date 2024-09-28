@@ -14,7 +14,9 @@ from gensim.models import doc2vec
 import config
 import image_process
 
+from utils import set_seeds
 
+set_seeds(42)
 parser = argparse.ArgumentParser()
 
 parser.add_argument("--embedding_size", 

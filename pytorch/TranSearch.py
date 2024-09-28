@@ -22,6 +22,8 @@ import config
 from data_input import TranSearchData
 from tqdm import tqdm
 
+from utils import set_seeds
+
 class TranSearch(nn.Module):
 	def __init__(self, visual_FC, textual_FC, 
 			visual_size, text_size, embed_size, 
@@ -163,6 +165,7 @@ def TripletLoss(anchor, positive, negatives):
 
 
 def main():
+	set_seeds(42)
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--embed_size", 
 		type=int,
