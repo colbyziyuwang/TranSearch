@@ -51,7 +51,7 @@ def extraction(meta_path, review_df, stop_words, count):
 
         # process queries
         # qs = map(text_process._remove_dup, 
-                    map(text_process._remove_char, category))
+                    # map(text_process._remove_char, category))
         # qs = [[w for w in q if w not in stop_words] for q in qs]
         
         # test no preprocesed queries
