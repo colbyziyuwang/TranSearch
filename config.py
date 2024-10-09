@@ -24,4 +24,4 @@ text_weights_path = weights_path + 'textual_FC.pt'
 
 # embedding size
 visual_size = 4096
-textual_size = 512
+textual_size = 768

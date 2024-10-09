@@ -30,7 +30,7 @@ class PrepareFeatures(nn.Module):
 		super(PrepareFeatures, self).__init__()
 		"""
 			For both visual and textual parts, we use several fully 
-			connnected layers, visual_size is 4096, textual_size is 512. 
+			connnected layers, visual_size is 4096, textual_size is 512 (768 for BERT). 
 		"""
 		self.is_training = is_training
 

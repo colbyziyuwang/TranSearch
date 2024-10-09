@@ -12,6 +12,37 @@ from torch.utils.data import Dataset
 
 import config
 
+from ast import literal_eval
+import collections
+from tqdm import tqdm
+import itertools
+import torch
+from transformers import AutoModel, AutoTokenizer
+
+# Supress warning
+import os
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
+
+# Initialize the BERT tokenizer and model
+tokenizer = AutoTokenizer.from_pretrained("activebus/BERT_Review")
+model = AutoModel.from_pretrained("activebus/BERT_Review")
+
+# Function to get BERT embedding for a reviews
+def get_bert_embedding(text):
+    embeddings = [torch.zeros(768)]
+    text = ' '.join(text)
+    # Split text into chunks of 512 tokens
+    for i in range(0, len(text), 512):
+        chunk = text[i:i+512]
+        inputs = tokenizer(chunk, return_tensors='pt', truncation=True, padding=True, max_length=512)
+        with torch.no_grad():
+            outputs = model(**inputs)
+        # Get the embedding from the [CLS] token (first token)
+        embedding = outputs.last_hidden_state[:, 0, :].squeeze(0)
+        embeddings.append(embedding)
+    
+    # Aggregate embeddings (e.g., by averaging)
+    return torch.mean(torch.stack(embeddings), dim=0)
 
 class PretrainData(Dataset):
 	def __init__(self, neg_num):
@@ -21,10 +52,28 @@ class PretrainData(Dataset):
 		self.all_items = set(self.asin_dict.keys())
 
 		# textual feture data
-		self.doc2vec_model = Doc2Vec.load(config.doc2model_path)
-		self.text_vec = {
-			asin: self.doc2vec_model.docvecs[asin] for asin in self.asin_dict}
+		# self.doc2vec_model = Doc2Vec.load(config.doc2model_path)
+		# self.text_vec = {
+			# asin: self.doc2vec_model.docvecs[asin] for asin in self.asin_dict}
+		
+		full_data = pd.read_csv(config.full_path)
+		full_data.query_ = full_data.query_.apply(literal_eval)
+		full_data.reviewText = full_data.reviewText.apply(literal_eval)
 
+        # gather reviews to same asins
+		raw_doc = collections.defaultdict(list)
+		for k, v in zip(full_data.asin, full_data.reviewText):
+			raw_doc[k].append(v)
+
+		# concatenate the reviews together
+		for k in raw_doc.keys():
+			m = [i for i in raw_doc[k]]
+			m = list(itertools.chain.from_iterable(m))
+			raw_doc[k] = m
+
+        # Replace the line where doc2vec is loaded with the BERT embedding process
+		self.text_vec = {asin: get_bert_embedding(raw_doc[asin]) for asin in tqdm(self.asin_dict, desc="bert")}
+		
 		# visual feature data
 		self.vis_vec = np.load(config.img_feature_path, allow_pickle=True).item()
 
@@ -86,9 +135,11 @@ class TranSearchData(PretrainData):
 	def sample_neg(self):
 		""" Take the also_view or buy_after_viewing as negative samples. """
 		self.features = []
-		for i in range(len(self.data)):
-			query_vec = self.doc2vec_model.docvecs[
-								self.query_dict[self.data['query_'][i]]]
+		for i in tqdm(range(len(self.data)), desc="data"):
+			# query_vec = self.doc2vec_model.docvecs[
+								# self.query_dict[self.data['query_'][i]]]
+			query_vec = get_bert_embedding(self.data['query_'][i])
+
 			if self.is_training:
 				# We tend to sample negative ones from the also_view and 
 				# buy_after_viewing items, if don't have enough, we then 
